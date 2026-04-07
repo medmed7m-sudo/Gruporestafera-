@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PULVINAR - Pedidos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #FFFFFF;
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        header {
+            background: #000000;
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .header-title {
+            margin: 0;
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+
+        .tab {
+            display: flex;
+            background: #f8f9fa;
+            overflow-x: auto;
+        }
+        .tab button {
+            flex: 1;
+            padding: 16px 10px;
+            border: none;
+            background: transparent;
+            font-size: 17px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .tab button.active {
+            background: white;
+            border-bottom: 4px solid #4a6cf7;
+            color: #4a6cf7;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        select, input[type="text"] {
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 17px;
+            width: 100%;
+        }
+
+        .add-custom {
+            display: flex;
+            gap: 10px;
+        }
+
+        .category-products {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            min-height: 250px;
+        }
+
+        .product-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #eee;
+            gap: 12px;
+        }
+
+        .product-info { flex: 1; }
+        .product-name { font-size: 16px; font-weight: 500; }
+        .ref { font-size: 14px; color: #666; font-weight: bold; }
+
+        .add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            font-size: 24px;
+        }
+
+        .item-info { flex: 1; }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+        .qty { font-weight: bold; min-width: 35px; text-align: center; }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer {
+            padding: 15px;
+            display: flex;
+            gap: 8px;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+
+        .footer button {
+            flex: 1;
+            padding: 16px;
+            font-size: 17px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+        }
+
+        .clear-btn { background: #e74c3c; }
+        .pdf-btn { background: #27ae60; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">PULVINAR</div>
+        </header>
+
+        <div class="tab">
+            <button id="tab1" class="active" onclick="switchTab(1)">GROS MARKET</button>
+            <button id="tab2" onclick="switchTab(2)">QUESOS</button>
+            <button id="tab3" onclick="switchTab(3)">VERDURAS</button>
+        </div>
+
+        <!-- Panel 1 - GROS MARKET -->
+        <div id="panel1">
+            <div class="controls">
+                <select id="category1" onchange="loadCategory(1)">
+                    <option value="Mi Carro">🛒Mi Carro</option>
+                    <option value="Carnicería">🥩 Carnicería</option>
+                    <option value="Conservas">🫙 Conservas</option>
+                    <option value="Pastas y Básicos">🍝 Pastas y Básicos</option>
+                    <option value="Lácteos">🥛 Lácteos</option>
+                    <option value="Aceites y Salsas">🥫 Aceites y Salsas</option>
+                    <option value="Especias">🌿 Especias</option>
+                    <option value="Frutos Secos">🥜 Frutos Secos</option>
+                    <option value="Bebidas">🍻 Bebidas</option>
+                    <option value="Limpieza">🧼 Limpieza</option>
+                    <option value="Avituallamiento">📦 Avituallamiento</option>
+                    <option value="Varios">📋 Varios</option>
+                </select>
+
+                <div class="add-custom">
+                    <input type="text" id="customItem1" placeholder="Producto personalizado">
+                    <button onclick="addCustomItem(1)" style="background:#4a6cf7;color:white;border:none;padding:0 20px;">Añadir</button>
+                </div>
+            </div>
+            <div class="category-products">
+                <div id="categoryTitle1" style="font-weight:bold;margin-bottom:12px;color:#444;"></div>
+                <div id="categoryProducts1"></div>
+            </div>
+        </div>
+
+        <!-- Panel 2 - QUESOS -->
+        <div id="panel2" style="display:none;">
+            <div class="controls">
+                <select id="category2" onchange="loadCategory(2)">
+                    <option value="Mi Carro">🛒Mi Carro</option>
+                    <option value="Quesos 🧀">Quesos 🧀</option>
+                    <option value="OTROS">OTROS</option>
+                </select>
+
+                <div class="add-custom">
+                    <input type="text" id="customItem2" placeholder="Producto personalizado">
+                    <button onclick="addCustomItem(2)" style="background:#4a6cf7;color:white;border:none;padding:0 20px;">Añadir</button>
+                </div>
+            </div>
+            <div class="category-products">
+                <div id="categoryTitle2" style="font-weight:bold;margin-bottom:12px;color:#444;"></div>
+                <div id="categoryProducts2"></div>
+            </div>
+        </div>
+
+        <!-- Panel 3 - VERDURAS -->
+        <div id="panel3" style="display:none;">
+            <div class="controls">
+                <select id="category3" onchange="loadCategory(3)">
+                    <option value="Mi Carro">🛒Mi Carro</option>
+                    <option value="VERDURAS">VERDURAS</option>
+                </select>
+
+                <div class="add-custom">
+                    <input type="text" id="customItem3" placeholder="Producto personalizado">
+                    <button onclick="addCustomItem(3)" style="background:#4a6cf7;color:white;border:none;padding:0 20px;">Añadir</button>
+                </div>
+            </div>
+            <div class="category-products">
+                <div id="categoryTitle3" style="font-weight:bold;margin-bottom:12px;color:#444;"></div>
+                <div id="categoryProducts3"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button onclick="clearCurrentList()" class="clear-btn">❌Limpiar actual</button>
+            <button onclick="generatePDF(1)" class="pdf-btn">📄 PDF GROS MARKET</button>
+            <button onclick="generatePDF(2)" class="pdf-btn">📄 PDF QUESOS</button>
+            <button onclick="generatePDF(3)" class="pdf-btn">📄 PDF VERDURAS</button>
+        </div>
+    </div>
+
+    <script>
+        let pedido1 = [], pedido2 = [], pedido3 = [];
+        let currentTab = 1;
+
+        // Productos con referencias solo para GROS MARKET
+        const products1 = { /* ... (tu lista completa con ref se mantiene igual) ... */ 
+            "Carnicería": [{name: "BOTIFARRA NEG. COLLAR BUIT E/K", ref: "00045175"}, {name: "BOTIFARRA CALÇOTADA SAF.FAM.E/K", ref: "00034343"}, {name: "CANSALADA PORC BUIT E/K", ref: "00092337"}, {name: "CANSALADA PORC FILE. BUIT E/K", ref: "00097222"}, {name: "FILET PORC CONG.PR.CARN.E/K", ref: "00099880"}, {name: "PREP.PICADA BOVI/PORC SAF.1K", ref: "0009865"}, {name: "PREP.PICADA MIXT.FAM.SAF.E/K", ref: "00031751"}],
+            "Conservas": [{name: "BLAT MORO GOURMET DOLÇ 285G", ref: "0009258"}, {name: "BOLET QUALITY ASSORT.LLAUNA 1.3K", ref: "0000603"}, {name: "CARXOFA NATURALE TROSS.LLAUNA 1.55K", ref: "0022312"}, {name: "CARXOFA QUALITY 30/40P 1.55K", ref: "0008046"}, {name: "COGOMBRE RIOVERDE POT 60/70 1.1K", ref: "0006022"}, {name: "ESPARREC GOURMET EXT.17/24P 425G", ref: "0008097"}, {name: "JALAPEÑO SAVORS RODANXA LLAUNA 2.9K", ref: "0007942"}, {name: "PEBROT PIO GOU/QTY TIRA LLAUNA 1.9K", ref: "0005842"}, {name: "PINYA GOURMET AL SEU SUC 490G", ref: "0003465"}, {name: "TAPERA HELIOS POT 500G", ref: "0008947"}, {name: "TOMAQUET CELORRIO TRITUR.4K", ref: "0010349"}, {name: "TONYINA QUALITY CLA.O.GIRASOL 650G", ref: "0008011"}],
+            "Pastas y Básicos": [{name: "ARROS MONTSIA BOMBA 5K", ref: "00079623"}, {name: "PASTA BARILLA PENNE RIGATE Nº73 5K", ref: "00035183"}, {name: "PASTA FAISAN MACARRO GRUIX 5K", ref: "00035132"}, {name: "PASTA FAISAN SPAGHETTI 5KP", ref: "00035135"}, {name: "PASTA FILO JR REFRIG 250G", ref: "00055900"}, {name: "PASTA LORI PENNE RIGATE 3K", ref: "00045532"}, {name: "PASTA NATURA PENNE RIGATE 5K", ref: "00213151"}],
+            "Lácteos": [{name: "I.PASTORET NAT.3.6K", ref: "00049731"}, {name: "LLET ASTURIANA SEMI.HOST.1.5L", ref: "00012850"}, {name: "LLET QUALITY GRAN CREME 1.5L", ref: "00216578"}, {name: "OU G.BLANCA POLS POT 340G", ref: "00032800"}, {name: "OU L 63-73G 120U", ref: "00211892"}],
+            "Aceites y Salsas": [{name: "ALLIOLI CHOVI 2K", ref: "00008877"}, {name: "KETCHUP PRIMA 1.8K", ref: "0008789"}, {name: "KETCHUP PRIMA BBQ.POT 1.8L", ref: "0008547"}, {name: "MAIONESA HELLMANN’S CAP AVALL 430ML", ref: "00119141"}, {name: "MAIONESA HELLMANN’S CUBELL 5L", ref: "00098711"}, {name: "MOSTASSA PRIMA 1.8K", ref: "0008766"}, {name: "OLI GOURMET OLIVA INT.5L 1º", ref: "0000221"}, {name: "OLI QUALITY ALT OLEIC 80% 25L 0.2º", ref: "0004034"}, {name: "OLI QUALITY GIRASOL 10L 0.2º", ref: "0004308"}, {name: "OLIVA EXCELENCIA NEG.ARAGON 2.25K", ref: "0003889"}, {name: "OLIVA QUALITY ARBEQ 2.35KP", ref: "00216452"}, {name: "OLIVA QUALITY COCTEL GALLEDA 5K", ref: "0007616"}, {name: "PEBROT D.MOLINICO PIO.EXT.1.9K", ref: "00223282"}, {name: "SALSA DIAMIR BBQ 1.85K", ref: "00205470"}, {name: "SALSA KNORR DEMI GLACE 900G", ref: "00032242"}, {name: "SALSA PIZZA DIAMIR 5K", ref: "0009649"}, {name: "SALSA TABASCO 150ML", ref: "0004924"}, {name: "VINAGRE QUALITY BALS.MODENA 5L", ref: "0004615"}],
+            "Especias": [{name: "CANYELLA QUALITY BRANCA 18CM 200G", ref: "0008813"}, {name: "CURCUMA QUALITY 850G", ref: "00047670"}, {name: "FINES HERBES QUALITY 300G", ref: "0007982"}, {name: "NOU MOSCADA GOURMET MOLTA SALE.45G", ref: "00016921"}, {name: "ORENGA QUALITY FULLA 140G", ref: "00047119"}, {name: "PEBRE GOURMET CAIENA BRANCA 15G", ref: "00016933"}, {name: "PEBRE QUALITY NEG.GRA 850G", ref: "00047457"}, {name: "PEBRE QUALITY NEG.MOLT 850G", ref: "00047458"}, {name: "SAL QUALITY CUINA FINA 5KP", ref: "00000800"}, {name: "SAL QUALITY CUINA GRUIXUDA 5KP", ref: "00000997"}, {name: "SUCRE AZUCARERA 1K", ref: "0000181"}, {name: "SUCRE AZUCARERA MORE 1K", ref: "00218900"}],
+            "Frutos Secos": [{name: "AMETLLA TORR.BOS.500G", ref: "00036437"}, {name: "AVELLANA GOURMET TORR.125G", ref: "00028536"}, {name: "AVELLANA QUALITY TORR.REPE.1K", ref: "00045225"}, {name: "AVELLANA TORR.BOS.500G", ref: "00036439"}, {name: "GAL.ELLEDI SAVOIARDI 400G", ref: "00218344"}, {name: "PANSA QUALITY SULTANA 1K", ref: "00045704"}, {name: "PATATA QUALITY XIPS 500G P-2", ref: "00034393"}, {name: "PICOS GOURMET RUSTIC AOVE 8% 250G", ref: "00219117"}, {name: "PINYO GOURMET PELAT 250G", ref: "00018136"}, {name: "PIÑON GOURMET MONDADO 80G", ref: "00052469"}],
+            "Bebidas": [{name: "COCACOLA LIGHT LLAUNA 33CL", ref: "00030332"}, {name: "COCACOLA ZERO LLAUNA 33CL", ref: "00030437"}, {name: "FANTA LLIMO.PET 2L", ref: "00006249"}, {name: "REFRESC GOURMET TARON 2L", ref: "00030521"}, {name: "VI GANDESA BNC.5L 13º", ref: "00025535"}, {name: "VI GANDESA NEG.5L 13º", ref: "00025534"}],
+            "Limpieza": [{name: "ABRILL QUALITY RENTAV.5LP", ref: "00002212"}, {name: "DESCREIX.QUALITY 5LP", ref: "0006139"}, {name: "ESCOMBRA MICAL BICOLOR", ref: "00023818"}, {name: "FREGALL QUALITY ACER 60G 10U", ref: "00218623"}, {name: "FREGALL QUALITY FIBRA VERDA 6M", ref: "00215940"}, {name: "FREGONA MICAL GROGA REC.", ref: "0000664"}, {name: "LLEIXIU MICAL 5L", ref: "00006345"}, {name: "NETEJADOR MICAL PI 1.5L", ref: "00078310"}, {name: "NETEJADOR QUALITY AMONIACAT 5LP", ref: "00002222"}, {name: "NETEJADOR QUALITY FORN DESGREI.5LP", ref: "0000678"}, {name: "NETEJADOR VIAKAL GEL PIST.700ML", ref: "0002293"}, {name: "NETEJATERRA QUALITY ESPIGOL 5LP", ref: "0001037"}, {name: "NETEJATERRES QUALITY PERF.5LP", ref: "00006732"}, {name: "RENTAV.QUALITY CONCEN.POMA 5LP", ref: "0002325"}, {name: "RENTAV.QUALITY MAQUINES 5LP", ref: "0002168"}, {name: "SABO QUALITY MANS LIQ.5LP", ref: "00004330"}],
+            "Avituallamiento": [{name: "B.BROSSA MICAL BLAU C.FACIL 30L 15U", ref: "00097548"}, {name: "B.BROSSA MICAL IN.85X110 10U 120L", ref: "00230456"}, {name: "BOSSA ANONIMA 70% 42X53", ref: "00061658"}, {name: "BOSSA BLOC BIO/COMP.20X30 500U", ref: "0006155"}, {name: "ENVAS PET MIKRAL 750CC 50U", ref: "0009791"}, {name: "FILM QUALITY TRANSP.300MX45CM", ref: "0001119"}, {name: "SAFATA MACOPACK ALUM.6 P+TAPA 50U", ref: "0001731"}],
+            "Varios": [{name: "BROU QUALITY VEG.DESHI D.1K", ref: "00209571"}, {name: "CAFE QUALITY GRA 100% ARABIC 1K", ref: "00088147"}, {name: "PATATA QUALITY FREG ORIG 2.5K E/K", ref: "00088993"}]
+        };
+
+        const products2 = { /* sin referencias */ 
+            "Quesos 🧀": [{name: "CAJA MOZARELLA"},{name: "QUESO EMENTAL"},{name: "QUESO PARMESANO"},{name: "QUESO COÑA PARMESANO"},{name: "QUESO GORGONZOLA"},{name: "QUESO AZUL"},{name: "QUESO MANCHEGO"},{name: "QUESO BOCONCCINO"},{name: "QUESO FETA"},{name: "MASCARPONE"},{name: "YUGUR BULGARO 5kg"},{name: "CAJA BURRATA"},{name: "NATA DE COCINA"},{name: "NATA DE MONTAR"}],
+            "OTROS": [{name: "JAMON DULCE"},{name: "BACON"},{name: "CAJA DE HUEVOS"},{name: "YEMA DE HUEVO"},{name: "ANCHOAS"},{name: "HARINA ESPOLVERINA 25kg"},{name: "PACK LECHE ENTERA"},{name: "PLACAS DE LASAÑA"}]
+        };
+
+        const products3 = { /* sin referencias */ 
+            "VERDURAS": [
+                {name: "CHAMPIÑONES GRANEL CAJA"},{name: "CEBOLLA GORDA SACO"},{name: "CEBOLLA MORADA SACO"},
+                {name: "CEBOLLA ENSALADA"},{name: "PEMIENTOS ROJO CAJA"},{name: "PEMIENTO VERDE CAJA"},
+                {name: "PEMIENTO PADRON CAJA"},{name: "ZANAHORA SACO"},{name: "PATATA ROJA/TIERNO/CAMBRILS"},
+                {name: "PATATA MONALISA SACO"},{name: "LECHUGA MIXTA CAJA"},{name: "LECHIGA LARGA CAJA"},
+                {name: "ESPINACAS FRESCAS CAJA"},{name: "AJO TIENRO MANOJO"},{name: "ALBAHACA CAJA 1Kg"},
+                {name: "CALABACIN CAJA"},{name: "BERENJENA CAJA"},{name: "LEMONES CAJA"},{name: "NARANJA CAJA"},
+                {name: "MANZANA CAJA"},{name: "TOMATE RAMA"},{name: "TOMATE MADURO"},{name: "TOMATE VERDE ENSALADA"}
+            ]
+        };
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab1').classList.toggle('active', tab===1);
+            document.getElementById('tab2').classList.toggle('active', tab===2);
+            document.getElementById('tab3').classList.toggle('active', tab===3);
+
+            document.getElementById('panel1').style.display = tab===1 ? 'block' : 'none';
+            document.getElementById('panel2').style.display = tab===2 ? 'block' : 'none';
+            document.getElementById('panel3').style.display = tab===3 ? 'block' : 'none';
+
+            loadCategory(tab);
+        }
+
+        function loadCategory(tab) {
+            const select = document.getElementById('category'+tab);
+            const category = select.value;
+            const container = document.getElementById('categoryProducts'+tab);
+            const title = document.getElementById('categoryTitle'+tab);
+
+            container.innerHTML = '';
+            title.textContent = category === "Mi Carro" ? "Productos en tu carro:" : `Productos de ${category}:`;
+
+            const products = tab===1 ? products1 : (tab===2 ? products2 : products3);
+
+            if (category === "Mi Carro") {
+                renderCart(tab);
+                return;
+            }
+
+            if (!products[category]) return;
+
+            products[category].forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'product-row';
+                div.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        ${tab === 1 && product.ref ? `<div class="ref">${product.ref}</div>` : ''}
+                    </div>
+                    <button class="add-btn" onclick="addToList(${tab}, '${product.name}', '${product.ref || ""}', '${category}')">+</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addToList(tab, name, ref, category) {
+            const list = tab===1 ? pedido1 : (tab===2 ? pedido2 : pedido3);
+            let existing = list.find(item => item.name === name);
+            if (existing) {
+                existing.qty = Math.min(15, existing.qty + 1);
+            } else {
+                list.push({name, ref: (tab===1 ? ref : ""), qty: 1, category});
+            }
+            if (document.getElementById('category'+tab).value === "Mi Carro") renderCart(tab);
+        }
+
+        function addCustomItem(tab) {
+            const name = document.getElementById('customItem'+tab).value.trim();
+            if (!name) return;
+            const list = tab===1 ? pedido1 : (tab===2 ? pedido2 : pedido3);
+            list.push({name, ref: (tab===1 ? "" : ""), qty: 1, category: "Personalizado"});
+            document.getElementById('customItem'+tab).value = '';
+            if (document.getElementById('category'+tab).value === "Mi Carro") renderCart(tab);
+        }
+
+        function changeQty(tab, index, delta) {
+            const list = tab===1 ? pedido1 : (tab===2 ? pedido2 : pedido3);
+            list[index].qty = Math.max(1, Math.min(15, list[index].qty + delta));
+            if (document.getElementById('category'+tab).value === "Mi Carro") renderCart(tab);
+        }
+
+        function deleteItem(tab, index) {
+            const list = tab===1 ? pedido1 : (tab===2 ? pedido2 : pedido3);
+            list.splice(index, 1);
+            if (document.getElementById('category'+tab).value === "Mi Carro") renderCart(tab);
+        }
+
+        function renderCart(tab) {
+            const container = document.getElementById('categoryProducts'+tab);
+            const list = tab===1 ? pedido1 : (tab===2 ? pedido2 : pedido3);
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">Aún no tienes productos en este carro</p>';
+                return;
+            }
+
+            list.forEach((item, index) => {
+                const isOne = item.qty === 1;
+                let qtyHTML = isOne 
+                    ? `<button onclick="changeQty(${tab},${index},1)" style="background:#27ae60;color:white;border:none;width:50px;height:50px;border-radius:12px;font-size:24px;">+</button>
+                       <button onclick="deleteItem(${tab},${index})" style="background:#e74c3c;color:white;border:none;width:50px;height:50px;border-radius:12px;font-size:24px;">✕</button>`
+                    : `<div class="qty-controls">
+                         <button class="qty-btn" onclick="changeQty(${tab},${index}, -1)">−</button>
+                         <span class="qty">x${item.qty}</span>
+                         <button class="qty-btn" onclick="changeQty(${tab},${index}, 1)">+</button>
+                       </div>
+                       <button onclick="deleteItem(${tab},${index})" class="delete-btn">✕</button>`;
+
+                const div = document.createElement('div');
+                div.className = 'product-row';
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div style="font-size:17px;">${item.name}</div>
+                        ${tab === 1 && item.ref ? `<div class="ref">${item.ref}</div>` : ''}
+                    </div>
+                    ${qtyHTML}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function clearCurrentList() {
+            if (confirm('¿Borrar el carro actual?')) {
+                if (currentTab===1) pedido1 = [];
+                else if (currentTab===2) pedido2 = [];
+                else pedido3 = [];
+                loadCategory(currentTab);
+            }
+        }
+
+        // ==================== PDF CORREGIDO ====================
+        function generatePDF(tab) {
+            const list = tab===1 ? pedido1 : (tab===2 ? pedido2 : pedido3);
+            if (list.length === 0) return alert('¡Añade productos primero!');
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const titles = ["PEDIDO GROS MARKET", "PEDIDO QUESOS", "PEDIDO VERDURAS"];
+
+            doc.setFontSize(18);
+            doc.text(titles[tab-1], 105, 20, {align:"center"});
+            doc.setFontSize(11);
+            doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 20, 35);
+
+            let y = 55;
+            doc.setFontSize(12);
+
+            // Solo en GROS MARKET mostramos columna de CÓDIGO
+            if (tab === 1) {
+                doc.text("CANT", 20, y);
+                doc.text("CÓDIGO", 50, y);
+                doc.text("PRODUCTO", 95, y);
+                y += 8;
+                doc.line(20, y, 190, y);
+
+                list.forEach(item => {
+                    y += 11;
+                    if (y > 270) { doc.addPage(); y = 30; }
+                    doc.text(item.qty.toString(), 25, y);
+                    doc.text(item.ref || "", 50, y);
+                    doc.text(item.name, 95, y);
+                });
+            } else {
+                // Para Quesos y Verduras: solo CANT y PRODUCTO
+                doc.text("CANT", 20, y);
+                doc.text("PRODUCTO", 80, y);
+                y += 8;
+                doc.line(20, y, 190, y);
+
+                list.forEach(item => {
+                    y += 11;
+                    if (y > 270) { doc.addPage(); y = 30; }
+                    doc.text(item.qty.toString(), 25, y);
+                    doc.text(item.name, 80, y);
+                });
+            }
+
+            doc.save(`Pedido_${tab}.pdf`);
+        }
+
+        window.onload = () => { switchTab(1); };
+    </script>
+</body>
+</html>
